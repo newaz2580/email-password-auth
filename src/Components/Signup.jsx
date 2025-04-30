@@ -1,4 +1,9 @@
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  updateProfile,
+ 
+} from "firebase/auth";
 import React, { useState } from "react";
 import { auth } from "../firebase/firebase.init";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -10,14 +15,16 @@ const Signup = () => {
 
   const handleSubmitForm = (e) => {
     e.preventDefault();
+    const name=e.target.name.value;
+    const photo=e.target.photo.value;
     const email = e.target.email.value;
     const password = e.target.password.value;
-    const check=e.target.terms.checked
-    console.log(email, password,check);
+    const check = e.target.terms.checked;
+    console.log(email, password, check);
     setSuccess(false);
     setError("");
-    if(!check){
-        return setError('please accepts our terms and conditions')
+    if (!check) {
+      return setError("please accepts our terms and conditions");
     }
     if (password.length < 6) {
       return setError("Password must be more than 6 character");
@@ -34,7 +41,19 @@ const Signup = () => {
     createUserWithEmailAndPassword(auth, email, password)
       .then((result) => {
         console.log(result);
-        setSuccess(true);
+        sendEmailVerification(auth.currentUser).then(() => {
+          alert("send your verified email address please check your email");
+          setSuccess(true);
+        });
+
+        // update profile
+        const Profile={
+          displayName:name,
+          photoURL:photo
+        }
+        updateProfile(auth.currentUser,Profile).then(()=>{
+          console.log('updated successful')
+        })
       })
       .catch((error) => {
         setError(error.message);
@@ -46,6 +65,21 @@ const Signup = () => {
         <h1 className="text-5xl font-bold">Signup now!</h1>
 
         <form onSubmit={handleSubmitForm} className="fieldset">
+          <label className="label">Name</label>
+          <input
+            type="text"
+            name="name"
+            className="input"
+            placeholder="Your Name"
+          />
+
+          <label className="label">Photo URL</label>
+          <input
+            type="text"
+            name="photo"
+            className="input"
+            placeholder="Photo URL"
+          />
           <label className="label">Email</label>
           <input
             type="email"
@@ -68,9 +102,7 @@ const Signup = () => {
               {showEye ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
             </button>
           </div>
-          <div>
-            <a className="link link-hover">Forgot password?</a>
-          </div>
+
           <label className="label">
             <input type="checkbox" name="terms" className="checkbox" />
             Accept terms and conditions
@@ -79,7 +111,12 @@ const Signup = () => {
             SignUp
           </button>
         </form>
-        <p>Already have an account please <Link className="underline text-green-600" to='/login'>Login</Link></p>
+        <p>
+          Already have an account please{" "}
+          <Link className="underline text-green-600" to="/login">
+            Login
+          </Link>
+        </p>
         <p className="text-red-500">{error}</p>
         {success && (
           <p className="text-green-600">Created account successfully</p>
